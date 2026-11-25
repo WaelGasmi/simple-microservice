@@ -1,0 +1,36 @@
+## Build results
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+publish/
+*.user
+*.suo
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+## Rider
+.idea/
+
+## Logs
+logs/
+*.log
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local secrets
+appsettings.*.local.json
+*.pfx
+*.snk

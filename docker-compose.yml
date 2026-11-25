@@ -1,0 +1,14 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ecomm
+    hostname: my-rabbit
+    ports:
+      # 4001 -> port AMQP personnalisé utilisé par les microservices (rabbitmq://localhost:4001)
+      - "4001:5672"
+      # Interface d'administration : http://localhost:15672 (guest / guest)
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: unless-stopped

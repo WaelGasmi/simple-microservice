@@ -1,0 +1,33 @@
+@Gateway_HostAddress = https://localhost:7162
+
+### Liste des produits (via Ocelot)
+GET {{Gateway_HostAddress}}/apigateway/Products
+Accept: application/json
+
+### Un produit (via Ocelot)
+GET {{Gateway_HostAddress}}/apigateway/Products/1
+Accept: application/json
+
+### Créer un produit (via Ocelot -> ProductsAPI -> RabbitMQ -> OrdersAPI)
+POST {{Gateway_HostAddress}}/apigateway/Products
+Content-Type: application/json
+
+{
+  "name": "prod12",
+  "stockQte": 660,
+  "price": 1500
+}
+
+### Liste des commandes (via Ocelot)
+GET {{Gateway_HostAddress}}/apigateway/Orders
+Accept: application/json
+
+### Créer une commande (via Ocelot)
+POST {{Gateway_HostAddress}}/apigateway/Orders
+Content-Type: application/json
+
+{
+  "orderDate": "2026-11-17T10:00:00",
+  "customerName": "Wael",
+  "productId": 1
+}

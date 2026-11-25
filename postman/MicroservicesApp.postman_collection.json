@@ -1,0 +1,627 @@
+{
+  "info": {
+    "_postman_id": "6f1c0d5e-8f5a-4b1e-9a01-3c7d2b4e5f10",
+    "name": "Atelier 8 - MicroservicesApp (ProductsAPI / OrdersAPI / Ocelot)",
+    "description": "Collection Postman de l'atelier 8 (Microservices ASP.NET Core).\n\n- Gateway Ocelot : https://localhost:7162 (routes /apigateway/...)\n- ProductsAPI : https://localhost:7066 (Swagger : /swagger)\n- OrdersAPI : https://localhost:7065 (Swagger : /swagger)\n- RabbitMQ Management : http://localhost:15672 (guest / guest)\n\nImporter aussi l'environnement 'MicroservicesApp - Local' pour avoir les variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "https://localhost:7162", "type": "string" },
+    { "key": "productsApiUrl", "value": "https://localhost:7066", "type": "string" },
+    { "key": "ordersApiUrl", "value": "https://localhost:7065", "type": "string" },
+    { "key": "rabbitUrl", "value": "http://localhost:15672", "type": "string" },
+    { "key": "rabbitUser", "value": "guest", "type": "string" },
+    { "key": "rabbitPass", "value": "guest", "type": "string" },
+    { "key": "productId", "value": "1", "type": "string" },
+    { "key": "orderId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Gateway Ocelot (/apigateway)",
+      "item": [
+        {
+          "name": "Products - Liste (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tableau de produits', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "const produits = pm.response.json();",
+                  "if (produits.length > 0) {",
+                  "    pm.collectionVariables.set('productId', produits[0].productId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Products",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Products"]
+            },
+            "description": "Route Ocelot -> GET https://localhost:7066/api/Products"
+          },
+          "response": []
+        },
+        {
+          "name": "Products - Par id (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Products/{{productId}}",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Products", "{{productId}}"]
+            },
+            "description": "Route Ocelot -> GET https://localhost:7066/api/Products/{id}"
+          },
+          "response": []
+        },
+        {
+          "name": "Products - Créer (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const produit = pm.response.json();",
+                  "pm.test('Produit créé', () => pm.expect(produit.productId).to.be.a('number'));",
+                  "pm.collectionVariables.set('productId', produit.productId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"prod12\",\n  \"stockQte\": 660,\n  \"price\": 1500\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Products",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Products"]
+            },
+            "description": "Crée un produit via la gateway. ProductsAPI publie aussi ProductCreated dans RabbitMQ -> OrdersAPI l'enregistre dans sa table Products (si RabbitMQ tourne)."
+          },
+          "response": []
+        },
+        {
+          "name": "Products - Modifier (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"name\": \"prod12\",\n  \"stockQte\": 700,\n  \"price\": 1600\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Products/{{productId}}",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Products", "{{productId}}"]
+            },
+            "description": "Le productId du body doit être identique à l'id de l'URL."
+          },
+          "response": []
+        },
+        {
+          "name": "Products - Supprimer (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Products/{{productId}}",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Products", "{{productId}}"]
+            },
+            "description": "Route Ocelot -> DELETE https://localhost:7066/api/Products/{id}"
+          },
+          "response": []
+        },
+        {
+          "name": "Orders - Liste (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tableau de commandes', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Orders",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Orders"]
+            },
+            "description": "Route Ocelot -> GET https://localhost:7065/api/Orders"
+          },
+          "response": []
+        },
+        {
+          "name": "Orders - Créer (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const commande = pm.response.json();",
+                  "pm.collectionVariables.set('orderId', commande.ordersId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderDate\": \"2026-11-17T10:00:00\",\n  \"customerName\": \"Wael\",\n  \"productId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{gatewayUrl}}/apigateway/Orders",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["apigateway", "Orders"]
+            },
+            "description": "Crée une commande via la gateway."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. ProductsAPI (direct :7066)",
+      "item": [
+        {
+          "name": "GET /api/Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tableau de produits', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productsApiUrl}}/api/Products",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["api", "Products"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/Products/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productsApiUrl}}/api/Products/{{productId}}",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["api", "Products", "{{productId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const produit = pm.response.json();",
+                  "pm.test('productId généré', () => pm.expect(produit.productId).to.be.a('number'));",
+                  "pm.collectionVariables.set('productId', produit.productId);",
+                  "console.log('ProductId enregistré :', produit.productId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"prod12\",\n  \"stockQte\": 660,\n  \"price\": 1500\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{productsApiUrl}}/api/Products",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["api", "Products"]
+            },
+            "description": "Publie ProductCreated dans RabbitMQ. Vérifier ensuite GET /api/Products d'OrdersAPI (produit synchronisé)."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/Products/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"name\": \"prod12\",\n  \"stockQte\": 700,\n  \"price\": 1600\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{productsApiUrl}}/api/Products/{{productId}}",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["api", "Products", "{{productId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/Products/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{productsApiUrl}}/api/Products/{{productId}}",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["api", "Products", "{{productId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. OrdersAPI (direct :7065)",
+      "item": [
+        {
+          "name": "GET /api/Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tableau de commandes', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Orders",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/Orders/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Orders/{{orderId}}",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Orders", "{{orderId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const commande = pm.response.json();",
+                  "pm.collectionVariables.set('orderId', commande.ordersId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderDate\": \"2026-11-17T10:00:00\",\n  \"customerName\": \"Wael\",\n  \"productId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Orders",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Orders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/Orders/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ordersId\": {{orderId}},\n  \"orderDate\": \"2026-11-17T10:00:00\",\n  \"customerName\": \"Wael\",\n  \"productId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Orders/{{orderId}}",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Orders", "{{orderId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/Orders/{id}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Orders/{{orderId}}",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Orders", "{{orderId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/Products (produits synchronisés RabbitMQ)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Tableau de produits synchronisés', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "console.log('Produits reçus via RabbitMQ :', pm.response.json());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersApiUrl}}/api/Products",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["api", "Products"]
+            },
+            "description": "Table Products locale d'OrdersAPI, alimentée par le consumer MassTransit (event-listener)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Swagger & RabbitMQ",
+      "item": [
+        {
+          "name": "Swagger ProductsAPI (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productsApiUrl}}/swagger/v1/swagger.json",
+              "host": ["{{productsApiUrl}}"],
+              "path": ["swagger", "v1", "swagger.json"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swagger OrdersAPI (JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersApiUrl}}/swagger/v1/swagger.json",
+              "host": ["{{ordersApiUrl}}"],
+              "path": ["swagger", "v1", "swagger.json"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RabbitMQ - Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{rabbitUser}}", "type": "string" },
+                { "key": "password", "value": "{{rabbitPass}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{rabbitUrl}}/api/overview",
+              "host": ["{{rabbitUrl}}"],
+              "path": ["api", "overview"]
+            },
+            "description": "Nécessite RabbitMQ démarré (docker compose up -d)."
+          },
+          "response": []
+        },
+        {
+          "name": "RabbitMQ - Queues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "basic",
+              "basic": [
+                { "key": "username", "value": "{{rabbitUser}}", "type": "string" },
+                { "key": "password", "value": "{{rabbitPass}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{rabbitUrl}}/api/queues",
+              "host": ["{{rabbitUrl}}"],
+              "path": ["api", "queues"]
+            },
+            "description": "Doit contenir la file 'event-listener' (consumer OrdersAPI) après démarrage de RabbitMQ."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
